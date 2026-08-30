@@ -12,10 +12,6 @@ const STORAGE_KEY = "camera-number-ocr:saved-numbers";
 
 type AppStatus = "idle" | "starting" | "scanning" | "stopped" | "error";
 type SavedNumber = { id: string; value: string; savedAt: string };
-type InstallPromptEvent = Event & {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
-};
 
 function getCameraError(error: unknown) {
   if (!(error instanceof DOMException))
@@ -98,15 +94,6 @@ export default function App() {
   const [ocrProgress, setOcrProgress] = useState(0);
   const [isReading, setIsReading] = useState(false);
   const [stabilityProgress, setStabilityProgress] = useState(0);
-  const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(
-    null,
-  );
-  const [isInstalled, setIsInstalled] = useState(
-    () =>
-      window.matchMedia("(display-mode: standalone)").matches ||
-      Boolean((navigator as Navigator & { standalone?: boolean }).standalone),
-  );
-  const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
 
   const clearTimer = useCallback(() => {
     if (timerRef.current !== null) {
@@ -432,31 +419,6 @@ export default function App() {
     setSavedNumbers((current) => current.filter((item) => item.id !== id));
   }, []);
 
-  const installApp = useCallback(async () => {
-    if (!installPrompt) return;
-    await installPrompt.prompt();
-    const choice = await installPrompt.userChoice;
-    if (choice.outcome === "accepted") setInstallPrompt(null);
-  }, [installPrompt]);
-
-  useEffect(() => {
-    const handleInstallPrompt = (event: Event) => {
-      event.preventDefault();
-      setInstallPrompt(event as InstallPromptEvent);
-    };
-    const handleInstalled = () => {
-      setIsInstalled(true);
-      setInstallPrompt(null);
-    };
-
-    window.addEventListener("beforeinstallprompt", handleInstallPrompt);
-    window.addEventListener("appinstalled", handleInstalled);
-    return () => {
-      window.removeEventListener("beforeinstallprompt", handleInstallPrompt);
-      window.removeEventListener("appinstalled", handleInstalled);
-    };
-  }, []);
-
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(savedNumbers));
@@ -635,30 +597,6 @@ export default function App() {
             </ul>
           )}
         </section>
-
-        {!isInstalled && (installPrompt || isIos) && (
-          <aside className="install-card" aria-labelledby="install-title">
-            <div>
-              <strong id="install-title">نصب برنامه روی گوشی</strong>
-              {isIos && !installPrompt ? (
-                <p>
-                  در Safari دکمهٔ اشتراک‌گذاری را بزنید و سپس «Add to Home
-                  Screen» را انتخاب کنید.
-                </p>
-              ) : (
-                <p>
-                  برای اجرای سریع‌تر و نمایش تمام‌صفحه، برنامه را روی صفحهٔ اصلی
-                  نصب کنید.
-                </p>
-              )}
-            </div>
-            {installPrompt && (
-              <button type="button" onClick={() => void installApp()}>
-                نصب برنامه
-              </button>
-            )}
-          </aside>
-        )}
 
         <p className="privacy-note">
           تصاویر فقط داخل مرورگر پردازش می‌شوند و جایی ارسال نمی‌شوند.

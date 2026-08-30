@@ -1,6 +1,6 @@
 # Camera Number OCR
 
-A React + Vite + TypeScript PWA that reads printed numbers from a device camera with Tesseract.js. The Persian, right-to-left interface lets the user review or correct a detected number before saving it locally.
+A React + Vite + TypeScript application that reads printed numbers from a device camera with Tesseract.js. The Persian, right-to-left interface lets the user review or correct a detected number before saving it locally.
 
 ## Run it
 
@@ -22,12 +22,11 @@ Open the local URL shown by Vite, select **روشن کردن دوربین**, gra
   - `REQUIRED_OCR_MATCHES = 2`: the same detected value must be read twice before it is accepted.
   - `MOTION_THRESHOLD = 20`: maximum exposure-adjusted average pixel difference considered stable. The value tolerates normal handheld movement while rejecting intentional camera movement.
   - `MOTION_WIDTH = 32` and `MOTION_HEIGHT = 12`: resolution of the motion-only sample. Downsampling to this size averages camera noise and keeps checks inexpensive; OCR still uses the larger image.
-- The Persian UI uses the local IRANSans files from `public/fonts`, including offline/PWA sessions after they have been cached.
+- The Persian UI uses the local IRANSans files from `public/fonts`.
 - The same Tesseract worker is reused for every frame and is terminated when the app unmounts.
 - Camera tracks are stopped when **Stop camera** is selected or the app unmounts.
 - Saved numbers and their timestamps remain in the browser using `localStorage`; each item can be deleted from the list.
-- A web app manifest and service worker make production builds installable and cache the application shell for offline reopening.
-- Android/Chromium receives a native in-app installation button when installation criteria are met. iPhone/iPad users see Safari's **Share → Add to Home Screen** instructions. The manifest includes 192 px, 512 px, maskable, and Apple touch icons.
+- PWA registration and installation are currently disabled. The inactive manifest, service-worker, and icon assets remain in `public` so the feature can be restored later.
 - Camera access works on `localhost`. To test from another device, serve the app over HTTPS because browsers require a secure context for camera access.
 
 ## Production build

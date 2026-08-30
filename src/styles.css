@@ -53,10 +53,6 @@ h1 { margin: 0; font-size: clamp(1.8rem,5vw,3rem); letter-spacing: -.035em; }
 .saved-list strong { color: #f2fbff; font: 800 1.3rem ui-monospace,monospace; }
 .saved-list time { color: #71839b; font-size: .72rem; }
 .saved-list button { border: 0; padding: 8px 11px; border-radius: 8px; color: #ffb5b5; background: rgba(116,24,34,.25); cursor: pointer; }
-.install-card { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 20px; padding: 14px; border: 1px solid rgba(68,223,188,.22); border-radius: 14px; background: rgba(29,119,99,.12); }
-.install-card strong { display: block; color: #d8fff5; font-size: .92rem; }
-.install-card p { margin: 5px 0 0; color: #93acb7; font-size: .76rem; line-height: 1.7; }
-.install-card button { flex: 0 0 auto; min-height: 40px; padding: 0 15px; border: 0; border-radius: 10px; color: #04241d; background: #44dfbc; font-weight: 800; cursor: pointer; }
 .privacy-note { margin: 20px 0 0; color: #71839b; font-size: .75rem; text-align: center; }
-@media (max-width:520px) { .scanner-card { border-radius: 20px; } .camera-controls, .install-card { flex-direction: column; align-items: stretch; } .install-card button { width: 100%; } }
+@media (max-width:520px) { .scanner-card { border-radius: 20px; } .camera-controls { flex-direction: column; align-items: stretch; } }
 @media (prefers-reduced-motion:reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
