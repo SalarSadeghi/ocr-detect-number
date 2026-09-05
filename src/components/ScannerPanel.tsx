@@ -55,7 +55,7 @@ export function ScannerPanel({
       return `در حال خواندن تصویر${ocrProgress ? ` · ٪${ocrProgress}` : "…"}`;
     if (isReading)
       return `در حال خواندن دوربین${ocrProgress ? ` · ٪${ocrProgress}` : "…"}`;
-    if (isStarting) return "در حال بارگیری مدل‌های تشخیص عدد…";
+    if (isStarting) return "در حال بارگیری مدل تشخیص ارقام انگلیسی…";
     if (isActive)
       return `دوربین را ثابت نگه دارید · ${stabilityProgress.toLocaleString("fa-IR")} از ${REQUIRED_STABLE_FRAMES.toLocaleString("fa-IR")}`;
     if (status === "stopped") return "برای اسکن بعدی دوربین را روشن یا یک تصویر انتخاب کنید";

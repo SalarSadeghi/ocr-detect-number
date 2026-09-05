@@ -1,8 +1,9 @@
 import {
   CONSENSUS_REQUIRED_MATCHES,
   HIGH_CONFIDENCE_THRESHOLD,
-} from "./config";
-import { updateConsecutiveHistory } from "./consensus";
+  MIN_SHARPNESS_SCORE,
+} from "./config.ts";
+import { updateConsecutiveHistory } from "./consensus.ts";
 
 type AutomaticDetectionInput = {
   value: string;
@@ -27,12 +28,23 @@ export function evaluateAutomaticDetection({
     };
   }
 
+  const highConfidence = confidence >= HIGH_CONFIDENCE_THRESHOLD;
+  if (!highConfidence) {
+    return {
+      accepted: false,
+      history: [],
+      message:
+        sharpness < MIN_SHARPNESS_SCORE
+          ? `عدد ${value} با اطمینان پایین خوانده شد؛ دوربین را ثابت نگه دارید و اجازه دهید فوکوس کامل شود.`
+          : `عدد ${value} با اطمینان ${Math.round(confidence).toLocaleString("fa-IR")}٪ خوانده شد و برای جلوگیری از تشخیص اشتباه تأیید نشد.`,
+    };
+  }
+
   const nextHistory = updateConsecutiveHistory(
     history,
     value,
     CONSENSUS_REQUIRED_MATCHES,
   );
-  const highConfidence = confidence >= HIGH_CONFIDENCE_THRESHOLD;
   const consensus = nextHistory.length >= CONSENSUS_REQUIRED_MATCHES;
 
   if (!consensus) {
@@ -40,11 +52,9 @@ export function evaluateAutomaticDetection({
       accepted: false,
       history: nextHistory,
       message:
-        sharpness < 12
-          ? `عدد ${value} دیده شد، اما تصویر کمی تار است؛ دوربین را ثابت‌تر و نزدیک‌تر کنید.`
-          : highConfidence
-            ? `عدد ${value} با اطمینان خوب خوانده شد؛ برای تأیید یک بار دیگر بررسی می‌شود.`
-            : `عدد ${value} با اطمینان پایین خوانده شد؛ برای تأیید دوباره بررسی می‌شود.`,
+        sharpness < MIN_SHARPNESS_SCORE
+          ? `عدد ${value} خوانده شد؛ دوربین را ثابت نگه دارید تا یک تصویر واضح دیگر آن را تأیید کند.`
+          : `عدد ${value} با اطمینان خوب خوانده شد؛ برای تأیید یک بار دیگر بررسی می‌شود.`,
     };
   }
 

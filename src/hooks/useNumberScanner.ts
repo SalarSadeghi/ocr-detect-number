@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { PSM, type Worker } from "tesseract.js";
+import type { Worker } from "tesseract.js";
 import type { DetectionSource, ScannerStatus } from "../types";
 import {
   DESKTOP_SCAN_HEIGHT_RATIO,
@@ -12,7 +12,7 @@ import {
   SCAN_WIDTH_RATIO,
   STABILITY_GUIDANCE_DELAY_MS,
 } from "../ocr/config";
-import { extractNumber, sanitizeNumber } from "../ocr/digits";
+import { sanitizeNumber } from "../ocr/digits";
 import { shouldResetConsensusForMotion } from "../ocr/consensus";
 import {
   evaluateAutomaticDetection,
@@ -23,8 +23,8 @@ import { getVideoGuideCrop } from "../ocr/crop";
 import {
   calculateMotionScore,
   drawSourceForOcr,
-  enhanceCanvasForOcr,
 } from "../ocr/imageProcessing";
+import { recognizeNumberFromCanvas } from "../ocr/recognition";
 import { createDigitWorker, terminateWorker } from "../ocr/worker";
 
 type UseNumberScannerOptions = {
@@ -43,6 +43,34 @@ function getCameraError(error: unknown) {
       return "دوربین در برنامهٔ دیگری در حال استفاده است.";
     default:
       return error.message || "راه‌اندازی دوربین انجام نشد.";
+  }
+}
+
+type ExtendedCameraCapabilities = MediaTrackCapabilities & {
+  exposureMode?: string[];
+  focusMode?: string[];
+};
+
+async function enableContinuousCameraAdjustments(stream: MediaStream) {
+  const track = stream.getVideoTracks()[0];
+  if (!track?.getCapabilities) return;
+
+  const capabilities = track.getCapabilities() as ExtendedCameraCapabilities;
+  const advanced: Record<string, string> = {};
+  if (capabilities.focusMode?.includes("continuous")) {
+    advanced.focusMode = "continuous";
+  }
+  if (capabilities.exposureMode?.includes("continuous")) {
+    advanced.exposureMode = "continuous";
+  }
+  if (!Object.keys(advanced).length) return;
+
+  try {
+    await track.applyConstraints({
+      advanced: [advanced as MediaTrackConstraintSet],
+    });
+  } catch {
+    // These camera controls are optional and vary by browser/device.
   }
 }
 
@@ -235,22 +263,20 @@ export function useNumberScanner({ expectedLength }: UseNumberScannerOptions) {
       setOcrProgress(0);
       try {
         const content = drawSourceForOcr(canvas, video, crop);
-        const { sharpness } = enhanceCanvasForOcr(canvas, content);
-        await worker.setParameters({
-          tessedit_pageseg_mode: PSM.SINGLE_LINE,
-        });
-        const result = await worker.recognize(canvas);
-        const detected = extractNumber(
-          result.data.text,
+        const recognition = await recognizeNumberFromCanvas(
+          worker,
+          canvas,
+          content,
           expectedLengthRef.current,
         );
+        const detected = recognition.candidate?.value ?? null;
 
         if (detected && activeRef.current && runId === runIdRef.current) {
           const accepted = acceptDetection(
             detected,
-            result.data.confidence,
+            recognition.candidate?.confidence ?? 0,
             source,
-            sharpness,
+            recognition.sharpness,
           );
           if (accepted) {
             activeRef.current = false;
@@ -337,6 +363,7 @@ export function useNumberScanner({ expectedLength }: UseNumberScannerOptions) {
         return;
       }
       streamRef.current = stream;
+      await enableContinuousCameraAdjustments(stream);
       if (!videoRef.current) throw new Error("نمایش دوربین در دسترس نیست.");
       videoRef.current.srcObject = stream;
       await videoRef.current.play();
@@ -403,22 +430,22 @@ export function useNumberScanner({ expectedLength }: UseNumberScannerOptions) {
           width: loaded.width,
           height: loaded.height,
         });
-        const { sharpness } = enhanceCanvasForOcr(canvas, content);
-        await worker.setParameters({ tessedit_pageseg_mode: PSM.SPARSE_TEXT });
-        const result = await worker.recognize(canvas);
-        const detected = extractNumber(
-          result.data.text,
+        const recognition = await recognizeNumberFromCanvas(
+          worker,
+          canvas,
+          content,
           expectedLengthRef.current,
         );
+        const detected = recognition.candidate?.value ?? null;
         if (!detected) {
           setError("عددی در تصویر پیدا نشد. تصویر واضح‌تر یا برش نزدیک‌تری انتخاب کنید.");
           setNotice(null);
         } else {
           acceptDetection(
             detected,
-            result.data.confidence,
+            recognition.candidate?.confidence ?? 0,
             "image",
-            sharpness,
+            recognition.sharpness,
           );
         }
         setStatus("stopped");

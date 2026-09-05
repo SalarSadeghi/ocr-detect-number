@@ -11,9 +11,93 @@ import {
 } from "../src/ocr/consensus.ts";
 import { mapGuideRectToSourceCrop } from "../src/ocr/crop.ts";
 import { extractNumber } from "../src/ocr/digits.ts";
+import { evaluateAutomaticDetection } from "../src/ocr/detectionPolicy.ts";
+import { findForegroundBounds } from "../src/ocr/imageProcessing.ts";
+import {
+  selectBestRecognitionCandidate,
+  usesSingleCharacterMode,
+} from "../src/ocr/recognition.ts";
 
-test("joins Western, Persian, and Arabic digits split across OCR lines", () => {
-  assert.equal(extractNumber("۱۲\n۳ ٤-5", 5), "12345");
+test("accepts only Western digits and joins OCR lines", () => {
+  assert.equal(extractNumber("۱۲۳ ٤٥\n12-3", 3), "123");
+});
+
+test("locates a small number inside a much larger OCR crop", () => {
+  const grayscale = new Uint8Array(20 * 10).fill(255);
+  for (let y = 3; y <= 7; y += 1) {
+    for (let x = 8; x <= 11; x += 1) grayscale[y * 20 + x] = 0;
+  }
+
+  assert.deepEqual(
+    findForegroundBounds(
+      grayscale,
+      20,
+      { x: 0, y: 0, width: 20, height: 10 },
+      127,
+      false,
+    ),
+    { x: 8, y: 3, width: 4, height: 5 },
+  );
+});
+
+test("never accepts repeated low-confidence OCR output", () => {
+  const first = evaluateAutomaticDetection({
+    value: "128",
+    confidence: 62,
+    sharpness: 40,
+    expectedLength: 3,
+    history: [],
+  });
+  const second = evaluateAutomaticDetection({
+    value: "128",
+    confidence: 62,
+    sharpness: 40,
+    expectedLength: 3,
+    history: ["128"],
+  });
+
+  assert.equal(first.accepted, false);
+  assert.deepEqual(first.history, []);
+  assert.equal(second.accepted, false);
+  assert.deepEqual(second.history, []);
+});
+
+test("accepts two matching high-confidence reads", () => {
+  const first = evaluateAutomaticDetection({
+    value: "123",
+    confidence: 92,
+    sharpness: 40,
+    expectedLength: 3,
+    history: [],
+  });
+  const second = evaluateAutomaticDetection({
+    value: "123",
+    confidence: 91,
+    sharpness: 40,
+    expectedLength: 3,
+    history: first.history,
+  });
+
+  assert.equal(first.accepted, false);
+  assert.equal(second.accepted, true);
+});
+
+test("uses single-character segmentation only for one expected digit", () => {
+  assert.equal(usesSingleCharacterMode(1), true);
+  assert.equal(usesSingleCharacterMode(2), false);
+  assert.equal(usesSingleCharacterMode(null), false);
+});
+
+test("prefers a complete focused/raw read over a destructive binary read", () => {
+  const result = selectBestRecognitionCandidate(
+    [
+      { value: "0123456789", confidence: 85, variant: "raw" },
+      { value: "0123486789", confidence: 90, variant: "binary" },
+    ],
+    10,
+  );
+
+  assert.equal(result?.value, "0123456789");
 });
 
 test("detects a dark background even when Otsu selects zero", () => {

@@ -1,14 +1,5 @@
-const PERSIAN_DIGITS = "۰۱۲۳۴۵۶۷۸۹";
-const ARABIC_DIGITS = "٠١٢٣٤٥٦٧٨٩";
-
-export function normalizeDigitCharacters(value: string) {
-  return value
-    .replace(/[۰-۹]/g, (digit) => String(PERSIAN_DIGITS.indexOf(digit)))
-    .replace(/[٠-٩]/g, (digit) => String(ARABIC_DIGITS.indexOf(digit)));
-}
-
 export function sanitizeNumber(value: string) {
-  return normalizeDigitCharacters(value).replace(/\D/g, "");
+  return value.replace(/[^0-9]/g, "");
 }
 
 export function extractNumber(text: string, expectedLength: number | null) {

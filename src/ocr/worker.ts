@@ -1,8 +1,8 @@
 import { createWorker, OEM, type Worker } from "tesseract.js";
-import { DIGIT_WHITELIST, OCR_LANGUAGES } from "./config";
+import { DIGIT_WHITELIST, OCR_LANGUAGE } from "./config";
 
 export async function createDigitWorker(onProgress: (progress: number) => void) {
-  const worker = await createWorker(OCR_LANGUAGES, OEM.LSTM_ONLY, {
+  const worker = await createWorker(OCR_LANGUAGE, OEM.LSTM_ONLY, {
     logger: (message) => {
       if (message.status === "recognizing text") {
         onProgress(Math.round(message.progress * 100));
