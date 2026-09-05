@@ -13,6 +13,7 @@ import {
   STABILITY_GUIDANCE_DELAY_MS,
 } from "../ocr/config";
 import { extractNumber, sanitizeNumber } from "../ocr/digits";
+import { shouldResetConsensusForMotion } from "../ocr/consensus";
 import {
   evaluateAutomaticDetection,
   getReviewMessage,
@@ -202,7 +203,7 @@ export function useNumberScanner({ expectedLength }: UseNumberScannerOptions) {
           previousMotionFrameRef.current,
         );
         previousMotionFrameRef.current = motion.signature;
-        if (motion.score > MOTION_THRESHOLD * 1.8) {
+        if (shouldResetConsensusForMotion(motion.score, MOTION_THRESHOLD)) {
           candidateHistoryRef.current = [];
         }
         stableFrameCountRef.current =

@@ -5,7 +5,10 @@ import {
   calculateOtsuThreshold,
   hasDarkBackground,
 } from "../src/ocr/binarization.ts";
-import { updateConsecutiveHistory } from "../src/ocr/consensus.ts";
+import {
+  shouldResetConsensusForMotion,
+  updateConsecutiveHistory,
+} from "../src/ocr/consensus.ts";
 import { mapGuideRectToSourceCrop } from "../src/ocr/crop.ts";
 import { extractNumber } from "../src/ocr/digits.ts";
 
@@ -57,4 +60,10 @@ test("requires matching consecutive results and resets after a mismatch", () => 
   assert.deepEqual(updateConsecutiveHistory(["123", "123"], "128", 2), [
     "128",
   ]);
+});
+
+test("does not treat the first motion baseline as real movement", () => {
+  assert.equal(shouldResetConsensusForMotion(Infinity, 24), false);
+  assert.equal(shouldResetConsensusForMotion(44, 24), true);
+  assert.equal(shouldResetConsensusForMotion(20, 24), false);
 });
