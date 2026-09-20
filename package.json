@@ -4,10 +4,12 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "predev": "node scripts/prepare-ocr.mjs",
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "prebuild": "node scripts/prepare-ocr.mjs",
+    "build": "tsc -b && vite build && node scripts/build-offline.mjs",
     "lint": "eslint .",
-    "test": "node --experimental-strip-types --test --test-isolation=none tests/*.test.mjs",
+    "test": "node --experimental-strip-types --test tests/*.test.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

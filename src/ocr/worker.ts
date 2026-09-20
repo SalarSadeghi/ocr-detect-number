@@ -3,6 +3,10 @@ import { DIGIT_WHITELIST, OCR_LANGUAGE } from "./config";
 
 export async function createDigitWorker(onProgress: (progress: number) => void) {
   const worker = await createWorker(OCR_LANGUAGE, OEM.LSTM_ONLY, {
+    workerPath: `${import.meta.env.BASE_URL}ocr/worker.min.js`,
+    corePath: `${import.meta.env.BASE_URL}ocr/core`,
+    langPath: `${import.meta.env.BASE_URL}ocr/lang`,
+    workerBlobURL: false,
     logger: (message) => {
       if (message.status === "recognizing text") {
         onProgress(Math.round(message.progress * 100));

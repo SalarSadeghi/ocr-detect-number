@@ -4,6 +4,7 @@ import { SavedNumbersList } from "./components/SavedNumbersList";
 import { ScannerPanel } from "./components/ScannerPanel";
 import { useNumberScanner } from "./hooks/useNumberScanner";
 import { useSavedNumbers } from "./hooks/useSavedNumbers";
+import { OfflineStatus } from "./components/OfflineStatus";
 
 export default function App() {
   const [expectedLength, setExpectedLength] = useState<number | null>(null);
@@ -85,6 +86,7 @@ export default function App() {
         <p className="privacy-note">
           تصاویر فقط داخل مرورگر پردازش می‌شوند و جایی ارسال نمی‌شوند.
         </p>
+        <OfflineStatus />
       </section>
     </main>
   );
